@@ -18,16 +18,13 @@ BddMgrV::buildPInitialState()
    // TODO : remember to set _initState
    // Set Initial State to All Zero
    _initState=BddNodeV::_one;
- /*   CktModule* module = VLDesign.getFltModule(); assert (module);
-    for(unsigned i=0; i<module->getDffSize();i++){
-        CktCell* tempdff=module->getSeqCell(i);
-        const unsigned width = tempdff->getOutPin()->getBusWidth();
-        for(unsigned j=0; j<width ; j++){
-//          BddNodeV temp=getBddNodeV(getNSName(getBitName(tempdff->getOutPinName(),j)));
-            BddNodeV temp=getBddNodeV(getBitName(tempdff->getOutPinName(),j));
-            _initState &= (~temp);
-        }   
-   }*/   
+  V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+  for(unsigned i = 0, n = ntk->getLatchSize(); i < n; ++i) {
+    const V3NetId& nId = ntk->getLatch(i);
+    BddNodeV b=bddMgrV->getBddNodeV(nId.id);
+	_initState &=(~b); 
+     }
+
 }
 
 void
