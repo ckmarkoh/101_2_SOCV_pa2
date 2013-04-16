@@ -71,65 +71,94 @@ void V3Ntk::buildNtkBdd() {
   // Construct BDDs in the DFS order
 
   _isBddBuilt = true;
+  for(unsigned i = 0, n = getLatchSize(); i < n; ++i) {
+    const V3NetId& nId =  getLatch(i);
+	BddNodeV ret = BddNodeV::_one;
+	buildBdd(nId);
+  }
 
   for(unsigned i = 0, n = getOutputSize(); i < n; ++i) {
     const V3NetId& nId =  getOutput(i);
 	BddNodeV ret = BddNodeV::_one;
-	
 	buildBdd(nId);
 	
   }
- 
+
+  for(unsigned i = 0, n = getInoutSize(); i < n; ++i) {
+    const V3NetId& nId =  getInout(i);
+	BddNodeV ret = BddNodeV::_one;
+	buildBdd(nId);
+	
+  }
 
 }
+
+
 void V3Ntk::buildBdd(const V3NetId& netId) {
   V3NetVec orderedNets;
-
   orderedNets.clear();
   orderedNets.reserve(getNetSize());
-
   newMiscData();
   dfsOrder(netId, orderedNets);
   assert (orderedNets.size() <= getNetSize());
-
   // TODO: build BDD for the specified net here
+
 	for(unsigned i=0;i<orderedNets.size();i++){
+
 		V3NetId& netid=	orderedNets[i];
-//		cout<<"id:"<<netid.id<<" cp:"<<netid.cp<<endl;
-//		cout<<"type:"<<getGateType(netid)<<endl;
 		BddNodeV b = bddMgrV->getBddNodeV(netid.id);
-		if(getGateType(netid)==AIG_NODE){
+/*		if(!bddMgrV->addBddNodeV(netid.id,b())){
+			continue;
+		}*/
+		//cout<<"id:"<<netid.id<<" cp:"<<netid.cp<<endl;
+		//cout<<"type:"<<V3GateTypeStr[getGateType(netid)]<<endl;
+		//cout<<"inputnetsize:"<<getInputNetSize(netid)<<endl;
+		//BddNodeV b = bddMgrV->getBddNodeV(netid.id);
+
+
+		if( getGateType(netid)==AIG_NODE ){
+			assert(getInputNetSize(netid)==2);
 			V3NetId in1=getInputNetId(netid, 0);
 			BddNodeV b1 = bddMgrV->getBddNodeV(in1.id);
 			V3NetId in2=getInputNetId(netid, 1);	
 			BddNodeV b2 = bddMgrV->getBddNodeV(in2.id);
-//			cout<<"input:"<<endl;
-//			cout<<in1.id<<" "<<in1.cp<<endl;
-//			cout<<in2.id<<" "<<in2.cp<<endl;
+			//cout<<"input:"<<endl;
+			//cout<<in1.id<<" "<<in1.cp<<endl;
+			//cout<<in2.id<<" "<<in2.cp<<endl;
+	/*		if (b1() == 0){
+				buildBdd(in1);
+			}
+			if (b2() == 0){
+				buildBdd(in2);
+			}*/
 			if(in1.cp){
 				b1= ~b1;	
 			}
 			if(in2.cp){
 				b2= ~b2;	
 			}
-		//	if(in1.id!=in2.id){
 				b = b1& b2;
-		//	}
-		/*	else if (in1.cp!=in2.cp){
-				assert(in1.id==in2.id);
-				b= BddNodeV::_zero;
-			}
-			else{
-				assert(in1.id==in2.id);
-				b=b1;
+	
+		}
+		else if(getGateType(netid)==V3_FF) {
+			V3NetId in1=getInputNetId(netid, 0);
+			BddNodeV b1 = bddMgrV->getBddNodeV(in1.id);
+		//	cout<<"input:"<<endl;
+		//	cout<<"input_type:"<<V3GateTypeStr[getGateType(in1)]<<endl;
+		//	cout<<in1.id<<" "<<in1.cp<<endl;
+		/*	if (b1() == 0){
+				buildBdd(in1);
 			}*/
+			if(in1.cp){
+		//		b1= ~b1;	
+			}
+		//		b = b1;//BddNodeV::_zero;
 		}
 		if(netid.cp){
-			b=~b;
+		//	b=~b;
 		}
 		bddMgrV->addBddNodeV(netid.id,b());
-
-		cout<<"bdd:"<<b<<endl;
+		//	cout<<"bdd:"<<b<<endl;
 	}
 }
 

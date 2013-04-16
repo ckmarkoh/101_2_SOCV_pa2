@@ -1,3 +1,10 @@
+v3Ntk.o: v3Ntk.cpp v3NtkHandler.h v3Ntk.h ../../include/v3Misc.h \
+  ../../include/v3Map.h ../../include/v3Set.h ../../include/v3Vec.h \
+  ../../include/v3Hash.h ../../include/v3HashUtil.h \
+  ../../include/v3Type.h ../../include/v3IntType.h \
+  ../../include/v3Queue.h ../../include/v3Stack.h v3Type.h \
+  ../../include/v3BitVec.h ../../include/v3Msg.h \
+  ../../include/v3StrUtil.h
 v3NtkBdd.o: v3NtkBdd.cpp v3NtkHandler.h v3Ntk.h ../../include/v3Misc.h \
   ../../include/v3Map.h ../../include/v3Set.h ../../include/v3Vec.h \
   ../../include/v3Hash.h ../../include/v3HashUtil.h \
@@ -22,13 +29,6 @@ v3NtkConstruct.o: v3NtkConstruct.cpp ../../include/v3Msg.h v3NtkUtil.h \
   ../../include/v3HashUtil.h ../../include/v3Type.h \
   ../../include/v3IntType.h ../../include/v3Queue.h \
   ../../include/v3Stack.h v3Type.h ../../include/v3BitVec.h \
-  ../../include/v3StrUtil.h
-v3Ntk.o: v3Ntk.cpp v3NtkHandler.h v3Ntk.h ../../include/v3Misc.h \
-  ../../include/v3Map.h ../../include/v3Set.h ../../include/v3Vec.h \
-  ../../include/v3Hash.h ../../include/v3HashUtil.h \
-  ../../include/v3Type.h ../../include/v3IntType.h \
-  ../../include/v3Queue.h ../../include/v3Stack.h v3Type.h \
-  ../../include/v3BitVec.h ../../include/v3Msg.h \
   ../../include/v3StrUtil.h
 v3NtkDuplicate.o: v3NtkDuplicate.cpp ../../include/v3Msg.h v3NtkHash.h \
   v3Ntk.h ../../include/v3Misc.h ../../include/v3Map.h \
