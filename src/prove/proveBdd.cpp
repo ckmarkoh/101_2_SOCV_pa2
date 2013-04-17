@@ -12,6 +12,12 @@
 #include "v3Msg.h"
 #include "bddMgrV.h"
 
+int totallevel=0;
+unsigned inbddsize=0;
+unsigned dffbddsize=0;
+
+
+
 void
 BddMgrV::buildPInitialState()
 {
@@ -24,13 +30,80 @@ BddMgrV::buildPInitialState()
     BddNodeV b=bddMgrV->getBddNodeV(nId.id);
 	_initState &=(~b); 
      }
-
+/*    for(unsigned j=0 ; j<module->getIoSize(CKT_IN);j++){
+            CktCell* tempio=module->getIoCell(CKT_IN,j);
+            const unsigned width = tempio->getOutPin()->getBusWidth();
+            for(unsigned k=0; k<width;k++){
+                inbddsize++;
+            }
+        }
+        for(unsigned j=0 ; j<module->getDffSize();j++){
+            CktCell* tempdff=module->getSeqCell(j);
+            const unsigned width = tempdff->getOutPin()->getBusWidth();
+            for(unsigned k=0; k<width;k++){
+                dffbddsize++;
+            }
+        }
+    totallevel=inbddsize+dffbddsize*2;
+*/
 }
 
 void
 BddMgrV::buildPTransRelation()
 {
    // TODO : remember to set _tr, _tri
+   // NOTE : _tri is the BDD with PI, Current State, and Next State Variables
+   //        _tr  is the BDD with Current and Next State Variables
+   //       (PI Variables are Existential Quantified from _tri)
+ 
+	_tri=BddNodeV::_one;
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	for(unsigned i = 0, n = ntk->getLatchSize(); i < n; i++) {
+		const V3NetId& nId = ntk->getLatch(i);
+		BddNodeV b=bddMgrV->getBddNodeV(nId.id);
+		const V3NetId& nId2 = ntk->getInputNetId(nId,0);
+		BddNodeV b2=bddMgrV->getBddNodeV(nId2.id);
+		if(b2()==0){
+			cout<<"haven't build:"<<nId2.id<<endl;
+			ntk->buildBdd(nId2);
+			b2=bddMgrV->getBddNodeV(nId2.id);
+
+		}
+		
+			_tri &= ~(b^b2); 
+		
+	}
+	_tr=_tri;
+	/*
+    CktModule* module = VLDesign.getFltModule(); assert (module);
+//  unsigned getIoSize() const;i
+    _tr=BddNodeV::_one;
+//  BddNodeV _tr2=BddNodeV::_one;
+    _tri=BddNodeV::_one;
+    for(unsigned i2=0; i2<module->getDffSize();i2++){
+        CktCell* tempdff=module->getSeqCell(i2);
+        string inPinName = tempdff->getInPin(0)->getOutPin()->getCell()->getOutPinName();
+        CktCell* tempdffin=tempdff->getInPin(0)->getOutPin()->getCell();
+//      cout<<"inPinName "<<tempdffin->getOutPinName()<<" celltype "<<tempdffin->getCellTypeString() <<endl;
+        const unsigned width2 = tempdffin->getOutPin()->getBusWidth();
+        for(unsigned j2=0; j2<width2;j2++)
+        {
+            BddNodeV tempin=getBddNodeV(getBitName(tempdffin->getOutPinName(),j2));
+            BddNodeV tempns=getBddNodeV(getNSName(getBitName(tempdff->getOutPinName(),j2)));
+            BddNodeV temp2=(~(tempin^tempns));
+            _tri &= temp2;//(~(tempin^tempns));
+
+        }
+    }
+            
+            _tr=_tri;
+//      _t
+       for(unsigned j=1 ; j<=inbddsize; j++ ){
+                _tr=_tr.exist(j);
+        }
+    //_tr=tri.exist(1)  
+*/
+
 }
 
 void

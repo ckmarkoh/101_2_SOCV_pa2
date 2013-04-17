@@ -16,6 +16,7 @@ BddNodeV
 BddNodeV::exist(unsigned l) const
 {
    // TODO: return existentially quantified BddNodeV on this BddNodeV
+
    return BddNodeV::_one;
 }
 
