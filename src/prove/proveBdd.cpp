@@ -84,7 +84,11 @@ BddMgrV::buildPTransRelation()
 			ntk->buildBdd(nId2);
 			b2=bddMgrV->getBddNodeV(nId2.id);
 		}
-		_tri &= ~(b ^ b2); 
+//		cout<<"nId.cp:"<<nId.cp<<" nid2.cp:"<<nId2.cp<<endl;
+		if(nId2.cp){
+			b2=~b2;
+		}
+		_tri &= (~(b ^ b2)); 
 	}
 	_tr=_tri;
 	/*
@@ -122,6 +126,47 @@ BddMgrV::buildPImage( int level )
 {
    // TODO : remember to add _reachStates and set _isFixed
    // Note:: _reachStates record the set of reachable states
+
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize();
+	unsigned dffbddsize=ntk->getLatchSize(); 
+
+    for(unsigned i=1;i<=unsigned(level);i++){
+    //  cout<<"i "<<i<<endl;
+        BddNodeV temp_state;
+    //  if(i==1) {
+    //       temp_state= _tr & _initState;
+    //  }
+    //  else{
+    //      cout<<"_reachStates[i-1]"<<endl<<_reachStates[i-1]<<endl;
+		 temp_state= _tr & getPReachState();
+    //  }
+//              cout<<"_reachStates[i-1]"<<endl<<_getPReachState()<<endl;
+        bool ismove=0;
+
+		for(unsigned j=1 ;j<=inbddsize+dffbddsize; j++ ){
+			temp_state=temp_state.exist(j);
+                //_tr=_tr.exist(j);
+        }
+//      temp_state=temp_state.nodeMove(6,4,ismove);
+        temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
+//      cout<<"ismove "<<ismove<<endl;
+//      drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
+        if(temp_state==getPReachState()){
+            Msg(MSG_IFO) << "Fixed point is reached  (time : " << _reachStates.size() << ")" << endl;
+            _isFixed=true;
+
+    //  cout<<"Fixed point is reached (time : " <<_reachStates.size()<<")" <<endl;
+            return;
+        }
+        temp_state |= getPReachState(); 
+        _reachStates.push_back(temp_state); 
+
+    }
+
+
+
+
 }
 
 void 
