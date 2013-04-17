@@ -12,10 +12,10 @@
 #include "v3Msg.h"
 #include "bddMgrV.h"
 
-int totallevel=0;
+/*int totallevel=0;
 unsigned inbddsize=0;
 unsigned dffbddsize=0;
-
+*/
 
 
 void
@@ -46,6 +46,19 @@ BddMgrV::buildPInitialState()
         }
     totallevel=inbddsize+dffbddsize*2;
 */
+	/*
+	_initState.exist(18);
+	cout<<_initState<<endl;
+
+	_initState.exist(17);
+	cout<<_initState<<endl;
+
+	_initState.exist(13);
+	cout<<_initState<<endl;
+
+	_initState.exist(1);
+	cout<<_initState<<endl;
+	*/
 }
 
 void
@@ -57,21 +70,21 @@ BddMgrV::buildPTransRelation()
    //       (PI Variables are Existential Quantified from _tri)
  
 	_tri=BddNodeV::_one;
+
+
+	V3NtkHandler* const ntkhandler=v3Handler.getCurHandler();
 	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
 	for(unsigned i = 0, n = ntk->getLatchSize(); i < n; i++) {
 		const V3NetId& nId = ntk->getLatch(i);
-		BddNodeV b=bddMgrV->getBddNodeV(nId.id);
+		BddNodeV b=bddMgrV->getBddNodeV(ntkhandler->getNetNameOrFormedWithId(nId)+"_ns");
 		const V3NetId& nId2 = ntk->getInputNetId(nId,0);
 		BddNodeV b2=bddMgrV->getBddNodeV(nId2.id);
 		if(b2()==0){
-			cout<<"haven't build:"<<nId2.id<<endl;
+		//	cout<<"haven't build:"<<nId2.id<<endl;
 			ntk->buildBdd(nId2);
 			b2=bddMgrV->getBddNodeV(nId2.id);
-
 		}
-		
-			_tri &= ~(b^b2); 
-		
+		_tri &= ~(b ^ b2); 
 	}
 	_tr=_tri;
 	/*
@@ -94,15 +107,13 @@ BddMgrV::buildPTransRelation()
             _tri &= temp2;//(~(tempin^tempns));
 
         }
-    }
-            
-            _tr=_tri;
-//      _t
+    }*/
+  	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize(); 
+	_tr=_tri;
        for(unsigned j=1 ; j<=inbddsize; j++ ){
                 _tr=_tr.exist(j);
         }
     //_tr=tri.exist(1)  
-*/
 
 }
 

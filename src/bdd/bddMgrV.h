@@ -116,6 +116,7 @@ public:
       return ( _reachStates.empty() ) ? _initState : _reachStates.back(); }
    void resetProof() {}
 
+
 private:
    // level = 0: const 1;
    // level = 1: lowest input variable

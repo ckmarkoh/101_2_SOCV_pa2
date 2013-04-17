@@ -18,6 +18,6 @@ V3_COMMAND(PInitialStateCmd,  CMD_TYPE_BDD);
 V3_COMMAND(PTransRelationCmd, CMD_TYPE_BDD);
 V3_COMMAND(PImageCmd,         CMD_TYPE_BDD);
 V3_COMMAND(PCheckPropertyCmd, CMD_TYPE_BDD);
-
+V3_COMMAND(PExistCmd, CMD_TYPE_BDD);
 #endif
 

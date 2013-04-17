@@ -22,7 +22,8 @@ initProveCmd() {
       v3CmdMgr->regCmd("PINITialstate", 5, new PInitialStateCmd) &&
       v3CmdMgr->regCmd("PTRansrelation", 3, new PTransRelationCmd) &&
       v3CmdMgr->regCmd("PIMAGe", 5, new PImageCmd) &&
-      v3CmdMgr->regCmd("PCHECKProperty", 7, new PCheckPropertyCmd)
+      v3CmdMgr->regCmd("PCHECKProperty", 7, new PCheckPropertyCmd) &&
+      v3CmdMgr->regCmd("PExist", 3, new PExistCmd)
       );
 }
 
@@ -267,4 +268,50 @@ PCheckPropertyCmd::help() const
   cout << setw(20) << left << "PCHECKProperty:"
     << "check the monitor by BDDs" << endl;
 }
+
+//----------------------------------------------------------------------
+//    BEXist <(size_t level)> <(string varName)> <(string bddName)>
+//----------------------------------------------------------------------
+V3CmdExecStatus
+PExistCmd::exec(const string& option)
+{
+  // check option
+  vector<string> options;
+  V3CmdExec::lexOptions(option, options);
+  size_t n = options.size();
+  if (n < 3)
+    return V3CmdExec::errorOption(CMD_OPT_MISSING, "");
+  if (n > 3)
+    return V3CmdExec::errorOption(CMD_OPT_EXTRA, options[3]);
+
+  int level;
+  if (!v3Str2Int(options[0], level) || (level < 1) ||
+      (size_t(level) >= bddMgrV->getNumSupports()))
+    return V3CmdExec::errorOption(CMD_OPT_ILLEGAL, options[0]);
+
+  if (!isValidVarName(options[1]))
+    return V3CmdExec::errorOption(CMD_OPT_ILLEGAL, options[1]);
+  if (!isValidVarName(options[2]))
+    return V3CmdExec::errorOption(CMD_OPT_ILLEGAL, options[2]);
+  BddNodeV f = ::getBddNodeV(options[2]);
+  if (f() == 0)
+    return V3CmdExec::errorOption(CMD_OPT_ILLEGAL, options[2]);
+  bddMgrV->forceAddBddNodeV(options[1], f.exist(level)());
+
+  return CMD_EXEC_DONE;
+}
+
+void
+PExistCmd::usage() const
+{
+  Msg(MSG_IFO) << "Usage: BEXist <(size_t level)> <(string varName)> <(string bddName)>\n";
+}
+
+void
+PExistCmd::help() const
+{
+  cout << setw(20) << left << "BEXist: "
+       << "Perform BDD existential quantification\n";
+}
+
 

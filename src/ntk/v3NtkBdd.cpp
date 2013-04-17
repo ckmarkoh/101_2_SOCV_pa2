@@ -90,7 +90,6 @@ void V3Ntk::buildNtkBdd() {
 	buildBdd(nId);
 	
   }
-
 }
 
 
