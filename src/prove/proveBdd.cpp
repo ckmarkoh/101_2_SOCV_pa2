@@ -173,4 +173,25 @@ void
 BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 {
    // TODO : prove the correctness of AG(~monitor)
+
+
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize();
+	unsigned dffbddsize=ntk->getLatchSize(); 
+	unsigned totallevel=inbddsize+dffbddsize*2;
+
+	BddNodeV check = (getPReachState()&(monitor) );
+
+
+    if(check==BddNodeV::_zero){
+        Msg(MSG_IFO) << "Property \"" << name << "\" is safe";
+       if(!_isFixed) Msg(MSG_IFO) << " up to time " << _reachStates.size();
+        Msg(MSG_IFO) << "." << endl;
+
+    }
+    else{
+        Msg(MSG_IFO) << "Property \"" << name << "\" is false." << endl;// << "Counter Example: " << endl;
+    }
+
+
 }
