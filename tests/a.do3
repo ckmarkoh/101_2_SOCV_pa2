@@ -1,0 +1,35 @@
+read rtl tests/a.v
+blast ntk
+bsetorder -file
+bconstruct -all
+pinit init
+brep 400
+brep 434
+bexist 8 e1 400
+brep e1
+bexist 7 e1 400
+brep e1
+bexist 6 e1 400
+brep e1
+bexist 5 e1 400
+brep e1
+bexist 4 e1 400
+brep e1
+bexist 3 e1 400
+brep e1
+bexist 2 e1 400
+brep e1
+bexist 14 e1 434
+brep e1
+bexist 9 e1 434
+brep e1
+bexist 8 e1 434
+brep e1
+bexist 5 e1 434
+brep e1
+bexist 4 e1 434
+brep e1
+bexist 3 e1 434
+brep e1
+bexist 2 e1 434
+q -f

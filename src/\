@@ -1,150 +1,200 @@
 /****************************************************************************
-  FileName     [ v3NtkBdd.cpp ]
-  PackageName  [ v3/src/ntk ]
-  Synopsis     [ V3 Network to BDDs. ]
-  Author       [ Cheng-Yin Wu ]
-  Copyright    [ Copyright(c) 2012 LaDs(III), GIEE, NTU, Taiwan ]
+  FileName     [ proveBdd.cpp ]
+  PackageName  [ prove ]
+  Synopsis     [ For BDD-based verification ]
+  Author       [ ]
+  Copyright    [ Copyleft(c) 2010 LaDs(III), GIEE, NTU, Taiwan ]
 ****************************************************************************/
 
-#ifndef V3_NTK_C
-#define V3_NTK_C
-
-#include "v3NtkHandler.h" // MODIFICATION FOR SoCV BDD
-#include "v3Ntk.h"
+#include <iostream>
+#include <iomanip>
+#include "v3NtkUtil.h"
 #include "v3Msg.h"
-#include "v3StrUtil.h"
-#include "bddNodeV.h" // MODIFICATION FOR SoCV BDD
-#include "bddMgrV.h" // MODIFICATION FOR SoCV BDD
+#include "bddMgrV.h"
 
-extern BddMgrV* bddMgrV; // MODIFICATION FOR SoCV BDD
+/*int totallevel=0;
+unsigned inbddsize=0;
+unsigned dffbddsize=0;
+*/
 
-const bool V3Ntk::setBddOrder(V3NtkHandler* const handler, const bool& file) const {
-  unsigned supportSize = getInputSize() + getInoutSize() + 2*getLatchSize();
-  if(supportSize >= bddMgrV->getNumSupports()) {
-    Msg(MSG_ERR) << "BDD Support Size is Smaller Than Current Design Required !!" << endl;
-    return false;
-  }
-  // build support
-  unsigned supportId = 1;
-  for(unsigned i = 0, n = getInputSize(); i < n; ++i) {
-    const V3NetId& nId = (file)? getInput(i) : getInput(n-i-1);
-    bddMgrV->addBddNodeV(nId.id, bddMgrV->getSupport(supportId)());
-    bddMgrV->addBddNodeV(handler->getNetNameOrFormedWithId(nId),
-        bddMgrV->getSupport(supportId)());
-    ++supportId;
-  }
-  for(unsigned i = 0, n = getInoutSize(); i < n; ++i) {
-    const V3NetId& nId = (file)? getInout(i) : getInout(n-i-1);
-    bddMgrV->addBddNodeV(nId.id, bddMgrV->getSupport(supportId)());
-    bddMgrV->addBddNodeV(handler->getNetNameOrFormedWithId(nId),
-        bddMgrV->getSupport(supportId)());
-    ++supportId;
-  }
-  for(unsigned i = 0, n = getLatchSize(); i < n; ++i) {
-    const V3NetId& nId = (file)? getLatch(i) : getLatch(n-i-1);
-    bddMgrV->addBddNodeV(nId.id, bddMgrV->getSupport(supportId)());
-    bddMgrV->addBddNodeV(handler->getNetNameOrFormedWithId(nId),
-        bddMgrV->getSupport(supportId)());
-    ++supportId;
-  }
-  // Next State
-  for(unsigned i = 0, n = getLatchSize(); i < n; ++i) {
-    const V3NetId& nId = (file)? getLatch(i) : getLatch(n-i-1);
-    bddMgrV->addBddNodeV(handler->getNetNameOrFormedWithId(nId)+"_ns",
-        bddMgrV->getSupport(supportId)());
-    ++supportId;
-  }
 
-  // Constants
-  for (uint32_t i = 0; i < getConstSize(); ++i) {
-    assert(getGateType(getConst(i)) == AIG_FALSE);
-    bddMgrV->addBddNodeV(getConst(i).id, BddNodeV::_zero());
-  }
+void
+BddMgrV::buildPInitialState()
+{
+   // TODO : remember to set _initState
+   // Set Initial State to All Zero
+   _initState=BddNodeV::_one;
+  V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+  for(unsigned i = 0, n = ntk->getLatchSize(); i < n; ++i) {
+    const V3NetId& nId = ntk->getLatch(i);
+    BddNodeV b=bddMgrV->getBddNodeV(nId.id);
+	_initState &=(~b); 
+     }
+/*    for(unsigned j=0 ; j<module->getIoSize(CKT_IN);j++){
+            CktCell* tempio=module->getIoCell(CKT_IN,j);
+            const unsigned width = tempio->getOutPin()->getBusWidth();
+            for(unsigned k=0; k<width;k++){
+                inbddsize++;
+            }
+        }
+        for(unsigned j=0 ; j<module->getDffSize();j++){
+            CktCell* tempdff=module->getSeqCell(j);
+            const unsigned width = tempdff->getOutPin()->getBusWidth();
+            for(unsigned k=0; k<width;k++){
+                dffbddsize++;
+            }
+        }
+    totallevel=inbddsize+dffbddsize*2;
+*/
+	/*
+	_initState.exist(18);
+	cout<<_initState<<endl;
 
-  return true;
+	_initState.exist(17);
+	cout<<_initState<<endl;
+
+	_initState.exist(13);
+	cout<<_initState<<endl;
+
+	_initState.exist(1);
+	cout<<_initState<<endl;
+	*/
 }
 
-void V3Ntk::buildNtkBdd() {
-  // TODO: build BDD for ntk here
-  // Perform DFS traversal from DFF inputs, inout, and output gates.
-  // Collect ordered nets to a V3NetVec
-  // Construct BDDs in the DFS order
-
-  _isBddBuilt = true;
-
-  for(unsigned i = 0, n = getOutputSize(); i < n; ++i) {
-    const V3NetId& nId =  getOutput(i);
-	BddNodeV ret = BddNodeV::_one;
-	
-	buildBdd(nId);
-	
-  }
+void
+BddMgrV::buildPTransRelation()
+{
+   // TODO : remember to set _tr, _tri
+   // NOTE : _tri is the BDD with PI, Current State, and Next State Variables
+   //        _tr  is the BDD with Current and Next State Variables
+   //       (PI Variables are Existential Quantified from _tri)
  
+	_tri=BddNodeV::_one;
 
-}
-void V3Ntk::buildBdd(const V3NetId& netId) {
-  V3NetVec orderedNets;
 
-  orderedNets.clear();
-  orderedNets.reserve(getNetSize());
-
-  newMiscData();
-  dfsOrder(netId, orderedNets);
-  assert (orderedNets.size() <= getNetSize());
-
-  // TODO: build BDD for the specified net here
-	for(unsigned i=0;i<orderedNets.size();i++){
-		V3NetId& netid=	orderedNets[i];
-		cout<<"id:"<<netid.id<<" cp:"<<netid.cp<<endl;
-		cout<<"type:"<<getGateType(netid)<<endl;
-		BddNodeV b = bddMgrV->getBddNodeV(netid.id);
-		if(getGateType(netid)==AIG_NODE){
-			V3NetId in1=getInputNetId(netid, 0);
-			BddNodeV b1 = bddMgrV->getBddNodeV(in1.id);
-			V3NetId in2=getInputNetId(netid, 1);	
-			BddNodeV b2 = bddMgrV->getBddNodeV(in2.id);
-			cout<<"input:"<<endl;
-			cout<<in1.id<<" "<<in1.cp<<endl;
-			cout<<in2.id<<" "<<in2.cp<<endl;
-			if(in1.cp){
-				b1= ~b1;	
-			}
-			if(in2.cp){
-				b2= ~b2;	
-			}
-		//	if(in1.id!=in2.id){
-				b = b1& b2;
-		//	}
-		/*	else if (in1.cp!=in2.cp){
-				assert(in1.id==in2.id);
-				b= BddNodeV::_zero;
-			}
-			else{
-				assert(in1.id==in2.id);
-				b=b1;
-			}*/
+	V3NtkHandler* const ntkhandler=v3Handler.getCurHandler();
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	for(unsigned i = 0, n = ntk->getLatchSize(); i < n; i++) {
+		const V3NetId& nId = ntk->getLatch(i);
+		BddNodeV b=bddMgrV->getBddNodeV(ntkhandler->getNetNameOrFormedWithId(nId)+"_ns");
+		const V3NetId& nId2 = ntk->getInputNetId(nId,0);
+		BddNodeV b2=bddMgrV->getBddNodeV(nId2.id);
+		if(b2()==0){
+		//	cout<<"haven't build:"<<nId2.id<<endl;
+			ntk->buildBdd(nId2);
+			b2=bddMgrV->getBddNodeV(nId2.id);
 		}
-		if(netid.cp){
-			b=~b;
+//		cout<<"nId.cp:"<<nId.cp<<" nid2.cp:"<<nId2.cp<<endl;
+		if(nId2.cp){
+			b2=~b2;
 		}
-		bddMgrV->addBddNodeV(netid.id,b());
-
-		cout<<"bdd:"<<b<<endl;
+		_tri &= (~(b ^ b2)); 
 	}
+	_tr=_tri;
+	/*
+    CktModule* module = VLDesign.getFltModule(); assert (module);
+//  unsigned getIoSize() const;i
+    _tr=BddNodeV::_one;
+//  BddNodeV _tr2=BddNodeV::_one;
+    _tri=BddNodeV::_one;
+    for(unsigned i2=0; i2<module->getDffSize();i2++){
+        CktCell* tempdff=module->getSeqCell(i2);
+        string inPinName = tempdff->getInPin(0)->getOutPin()->getCell()->getOutPinName();
+        CktCell* tempdffin=tempdff->getInPin(0)->getOutPin()->getCell();
+//      cout<<"inPinName "<<tempdffin->getOutPinName()<<" celltype "<<tempdffin->getCellTypeString() <<endl;
+        const unsigned width2 = tempdffin->getOutPin()->getBusWidth();
+        for(unsigned j2=0; j2<width2;j2++)
+        {
+            BddNodeV tempin=getBddNodeV(getBitName(tempdffin->getOutPinName(),j2));
+            BddNodeV tempns=getBddNodeV(getNSName(getBitName(tempdff->getOutPinName(),j2)));
+            BddNodeV temp2=(~(tempin^tempns));
+            _tri &= temp2;//(~(tempin^tempns));
+
+        }
+    }*/
+  	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize(); 
+	_tr=_tri;
+       for(unsigned j=1 ; j<=inbddsize; j++ ){
+                _tr=_tr.exist(j);
+        }
+    //_tr=tri.exist(1)  
+
 }
 
-// put fanins of a net (id) into a vector (nets) in topological order
-void V3Ntk::dfsOrder(const V3NetId& id, V3NetVec& nets) {
-  if (isLatestMiscData(id)) return;
-  // Set Latest Misc Data
-  setLatestMiscData(id);
-  // Traverse Fanin Logics
-  const V3GateType type = getGateType(id);
-  if(type == AIG_NODE) {
-    dfsOrder(getInputNetId(id, 0), nets);
-    dfsOrder(getInputNetId(id, 1), nets);
-  }
-  nets.push_back(id);  // Record Order
+void
+BddMgrV::buildPImage( int level )
+{
+   // TODO : remember to add _reachStates and set _isFixed
+   // Note:: _reachStates record the set of reachable states
+
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize();
+	unsigned dffbddsize=ntk->getLatchSize(); 
+
+    for(unsigned i=1;i<=unsigned(level);i++){
+    //  cout<<"i "<<i<<endl;
+        BddNodeV temp_state;
+    //  if(i==1) {
+    //       temp_state= _tr & _initState;
+    //  }
+    //  else{
+    //      cout<<"_reachStates[i-1]"<<endl<<_reachStates[i-1]<<endl;
+		 temp_state= _tr & getPReachState();
+    //  }
+//              cout<<"_reachStates[i-1]"<<endl<<_getPReachState()<<endl;
+        bool ismove=0;
+
+		for(unsigned j=1 ;j<=inbddsize+dffbddsize; j++ ){
+			temp_state=temp_state.exist(j);
+                //_tr=_tr.exist(j);
+        }
+//      temp_state=temp_state.nodeMove(6,4,ismove);
+        temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
+//      cout<<"ismove "<<ismove<<endl;
+//      drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
+        if(temp_state==getPReachState()){
+            Msg(MSG_IFO) << "Fixed point is reached  (time : " << _reachStates.size() << ")" << endl;
+            _isFixed=true;
+
+    //  cout<<"Fixed point is reached (time : " <<_reachStates.size()<<")" <<endl;
+            return;
+        }
+        temp_state |= getPReachState(); 
+        _reachStates.push_back(temp_state); 
+
+    }
+
+
+
+
 }
 
-#endif
+void 
+BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
+{
+   // TODO : prove the correctness of AG(~monitor)
+
+
+	V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
+	unsigned inbddsize=ntk->getInoutSize()+ntk->getInputSize();
+	unsigned dffbddsize=ntk->getLatchSize(); 
+	unsigned totallevel=inbddsize+dffbddsize*2;
+
+	BddNodeV check = (getPReachState()&(monitor) );
+
+
+    if(check==BddNodeV::_zero){
+        Msg(MSG_IFO) << "Property \"" << name << "\" is safe";
+       if(!_isFixed) Msg(MSG_IFO) << " up to time " << _reachStates.size();
+        Msg(MSG_IFO) << "." << endl;
+
+    }
+    else{
+        Msg(MSG_IFO) << "Property \"" << name << "\" is violated." << endl;
+		Msg(MSG_IFO) << "Counter Example: " << endl;
+   		cout<<check<<endl; 
+	
+	}
+
+
+}

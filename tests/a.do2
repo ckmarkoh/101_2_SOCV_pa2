@@ -1,0 +1,9 @@
+read rtl tests/a.v
+blast ntk
+bsetorder -file
+bconstruct -all
+pinit init
+ptrans tri tr
+brep tri
+brep tr
+q -f

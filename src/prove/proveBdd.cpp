@@ -182,7 +182,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 	BddNodeV check = (getPReachState()&(monitor) );
 
-
+		
     if(check==BddNodeV::_zero){
         Msg(MSG_IFO) << "Property \"" << name << "\" is safe";
        if(!_isFixed) Msg(MSG_IFO) << " up to time " << _reachStates.size();
@@ -190,8 +190,67 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
     }
     else{
-        Msg(MSG_IFO) << "Property \"" << name << "\" is false." << endl;// << "Counter Example: " << endl;
-    }
+        Msg(MSG_IFO) << "Property \"" << name << "\" is violated." << endl;
+		Msg(MSG_IFO) << "Counter Example: " << endl;
 
+		addBddNodeV("monitor", monitor());
+   		drawBdd("monitor", "monitor.dot");
+	
+
+		BddNodeV temp_state;
+		BddNodeV checks;
+		unsigned z=0;
+		while(z<2){
+			if(z==0){
+				checks=check;
+			}
+			else{
+				checks=temp_state;
+			}
+			cout<<checks<<endl;
+			cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
+			forceAddBddNodeV("checks", checks());
+			drawBdd("checks", "checks11.dot");
+			bool ismove;
+			BddNodeV checks12=checks.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
+			cout<<"ismove:"<<ismove<<endl;
+			forceAddBddNodeV("checks12", checks12());
+			drawBdd("checks12", "checks12.dot");
+
+			BddNodeV checks2=_tri & checks12;
+
+			addBddNodeV("checks2", checks2());
+			drawBdd("checks2", "checks21.dot");
+			
+			for(unsigned j=0 ; j<dffbddsize;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				checks2=checks2.exist(totallevel-j);
+			}
+
+			checks2=checks2^checks;
+			forceAddBddNodeV("checks2", checks2());
+			drawBdd("checks2", "checks22.dot");
+			temp_state=checks2;
+			BddNodeV get_input=checks2;
+			for(unsigned j=0 ; j<dffbddsize;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				get_input=get_input.exist(totallevel-dffbddsize-j);
+			}
+			forceAddBddNodeV("get_input", get_input());
+			drawBdd("get_input", "get_input.dot");
+
+			for(unsigned j=1 ; j<=inbddsize;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				checks2=checks2.exist(j);
+			}
+			forceAddBddNodeV("checks2", checks2());
+			drawBdd("checks2", "checks23.dot");
+
+			temp_state=checks2;
+
+			z++;
+		
+		}
+	}
 
 }

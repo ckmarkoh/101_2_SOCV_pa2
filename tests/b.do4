@@ -1,0 +1,18 @@
+read des tests/b.v
+syn
+flat
+bsetorder -file
+bconstruct -all
+pinit init
+ptrans _ref_tri _ref_tr
+bsim _ref_tri 000000
+bsim _ref_tri 110010
+bsim _ref_tri 001010
+bsim _ref_tri 111001
+bsim _ref_tri 000101
+bsim _ref_tri 110100
+bsim _ref_tri 001111
+bsim _ref_tri 111101
+bsim _ref_tri 111111
+bsim _ref_tri 000010
+
