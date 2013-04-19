@@ -8,20 +8,46 @@
 
 #include <iostream>
 #include <iomanip>
+#include <istream>
+#include <sstream>
+
 #include "v3NtkUtil.h"
 #include "v3Msg.h"
 #include "bddMgrV.h"
-
+//#include "util.h"
 /*int totallevel=0;
 unsigned inbddsize=0;
 unsigned dffbddsize=0;
 */
+inline string myInt2Str(const int num) {
+   // Int to string conversion
+   string str = "";
+   stringstream ss(str);
+   ss << num;
+   return ss.str();
+}
+
+void drawBddPng(string fname,BddNodeV& b)
+{
+   string fname1=fname;
+   fname1+=".dot";
+   ofstream ofile(fname1.c_str());
+   b.drawBdd(fname, ofile);
+   string cmd="dot -o "+fname+".png -Tpng "+fname1;
+   system(cmd.c_str());
+   string cmd2="mv  "+fname+".png"+" ~/public_html/bdd_png/ -f ";
+   string cmd3="mv  "+fname1+" ~/public_html/bdd_dot/ -f ";
+
+  system(cmd2.c_str());
+  system(cmd3.c_str());
+}
+                                                                                                                                       
 
 
 void
 BddMgrV::buildPInitialState()
 {
-   // TODO : remember to set _initState
+   // TODO : remember to sa_initState
    // Set Initial State to All Zero
    _initState=BddNodeV::_one;
   V3Ntk* const ntk = v3Handler.getCurHandler()->getNtk();
@@ -119,6 +145,9 @@ BddMgrV::buildPTransRelation()
         }
     //_tr=tri.exist(1)  
 
+		drawBddPng("tr_",_tr);
+
+		drawBddPng("tri_",_tri);
 }
 
 void
@@ -145,11 +174,16 @@ BddMgrV::buildPImage( int level )
         bool ismove=0;
 
 		for(unsigned j=1 ;j<=inbddsize+dffbddsize; j++ ){
+	//	cout<<"temp_state_exist"<<endl;
 			temp_state=temp_state.exist(j);
                 //_tr=_tr.exist(j);
         }
+		//cout<<"temp_state:"<<temp_state<<endl;	
 //      temp_state=temp_state.nodeMove(6,4,ismove);
-        temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
+
+		if(temp_state.getLevel()>0){
+			temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
+		}
 //      cout<<"ismove "<<ismove<<endl;
 //      drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
         if(temp_state==getPReachState()){
@@ -159,7 +193,11 @@ BddMgrV::buildPImage( int level )
     //  cout<<"Fixed point is reached (time : " <<_reachStates.size()<<")" <<endl;
             return;
         }
-        temp_state |= getPReachState(); 
+
+		drawBddPng("img_temp_"+myInt2Str(int(_reachStates.size())),temp_state);
+        temp_state |= getPReachState();
+ 
+		drawBddPng("img_"+myInt2Str(int(_reachStates.size())),temp_state);
         _reachStates.push_back(temp_state); 
 
     }
@@ -197,54 +235,102 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
    		drawBdd("monitor", "monitor.dot");
 	
 
+		cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
+
 		BddNodeV temp_state;
+		BddNodeV prev_store;
 		BddNodeV checks;
 		unsigned z=0;
-		while(z<2){
+		while(true){
 			if(z==0){
 				checks=check;
+				prev_store=checks;
 			}
 			else{
 				checks=temp_state;
 			}
-			cout<<checks<<endl;
-			cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
-			forceAddBddNodeV("checks", checks());
-			drawBdd("checks", "checks11.dot");
-			bool ismove;
-			BddNodeV checks12=checks.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
-			cout<<"ismove:"<<ismove<<endl;
-			forceAddBddNodeV("checks12", checks12());
-			drawBdd("checks12", "checks12.dot");
+				//cout<<checks<<endl;
+			
+				
+				drawBddPng(name+"checks11_"+myInt2Str(z),checks);
+			
+		/*	BddNodeV get_input=checks;
+			for(unsigned j=0 ; j<dffbddsize;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				get_input=get_input.exist(totallevel-dffbddsize-j);
+			}
+
+
+			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
+				drawBddPng(name+"get_input1_"+myInt2Str(z),get_input);
+			*/
+
+			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
+			BddNodeV checks12=checks;
+
+			for(unsigned j=1 ; j<=inbddsize;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				checks12=checks12.exist(j);
+			}
+
+			 drawBddPng(name+"checks12_"+myInt2Str(z),checks12);
+
+
+			if(z>0){
+				checks12=checks12^(prev_store&checks12);
+				prev_store |= checks12;
+				 drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
+			}
+			
+			 drawBddPng(name+"checks13_"+myInt2Str(z),checks12);
+
+			if(checks12.getLevel()>0){
+				bool ismove;
+				checks12=checks12.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
+			}
+
+
+			 drawBddPng(name+"checks14_"+myInt2Str(z),checks12);
+
 
 			BddNodeV checks2=_tri & checks12;
+			
+				 drawBddPng(name+"checks21_"+myInt2Str(z),checks2);
+			if(int(_reachStates.size())-1-int(z)<0){
+				break;
+			}
+			//checks2=checks2^checks;
+			checks2=checks2&_reachStates[_reachStates.size()-1-z];
 
-			addBddNodeV("checks2", checks2());
-			drawBdd("checks2", "checks21.dot");
+			drawBddPng(name+"checks22_"+myInt2Str(z),checks2);
 			
 			for(unsigned j=0 ; j<dffbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
 				checks2=checks2.exist(totallevel-j);
 			}
 
-			checks2=checks2^checks;
-			forceAddBddNodeV("checks2", checks2());
-			drawBdd("checks2", "checks22.dot");
-			temp_state=checks2;
-			BddNodeV get_input=checks2;
+
+			cerr<<"reachState size:"<<_reachStates.size()-1-z<<endl;
+
+				drawBddPng(name+"checks23_"+myInt2Str(z),checks2);
+
+
+		/*	get_input=checks2;
+
+
 			for(unsigned j=0 ; j<dffbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
 				get_input=get_input.exist(totallevel-dffbddsize-j);
 			}
-			forceAddBddNodeV("get_input", get_input());
-			drawBdd("get_input", "get_input.dot");
 
+				drawBddPng(name+"get_input2_"+myInt2Str(z),get_input);*/
+		/*	cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
 			for(unsigned j=1 ; j<=inbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
 				checks2=checks2.exist(j);
-			}
-			forceAddBddNodeV("checks2", checks2());
-			drawBdd("checks2", "checks23.dot");
+			}*/
+
+//				drawBddPng(name+"checks23_"+myInt2Str(z),checks2);
 
 			temp_state=checks2;
 
