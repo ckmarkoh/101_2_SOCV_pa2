@@ -36,7 +36,7 @@ void drawBddPng(string fname,BddNodeV& b)
    string cmd="dot -o "+fname+".png -Tpng "+fname1;
    system(cmd.c_str());
    string cmd2="mv  "+fname+".png"+" ~/public_html/bdd_png/ -f ";
-   string cmd3="mv  "+fname1+" ~/public_html/bdd_dot/ -f ";
+   string cmd3="rm  "+fname1+" -f ";
 
   system(cmd2.c_str());
   system(cmd3.c_str());
@@ -195,7 +195,7 @@ BddMgrV::buildPImage( int level )
         }
 
 		//drawBddPng("img_temp_"+myInt2Str(int(_reachStates.size())),temp_state);
-        temp_state |= getPReachState();
+        //temp_state |= getPReachState();
  
 		//drawBddPng("img_"+myInt2Str(int(_reachStates.size())),temp_state);
         _reachStates.push_back(temp_state); 
@@ -269,10 +269,10 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
 
-			for(unsigned j=1 ; j<=inbddsize;j++){
+	/*		for(unsigned j=1 ; j<=inbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
 				checks=checks.exist(j);
-			}
+			}*/
 
 			 //drawBddPng(name+"checks_12_"+myInt2Str(z),checks);
 
@@ -281,9 +281,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				checks=checks^(prev_store&checks);
 				prev_store |= checks;
 				 //drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
-			
 				/**************GET INPUT************************/	
-
 				BddNodeV get_input=( checks & temp_stat2) & _tri;
 				for(unsigned j=0 ; j<dffbddsize*2;j++){
 			//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
@@ -291,10 +289,9 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				}
 					drawBddPng(name+"get_input_"+myInt2Str(z),get_input);
 				/**************GET INPUT************************/	
-			
 			}
 
-			 //drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
+			 drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
 
 			if(checks.getLevel()>0){
 				bool ismove;
@@ -306,7 +303,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 			temp_stat2=checks;
 
-			checks=_tri & checks;
+			checks=_tr & checks;
 		
 
 
