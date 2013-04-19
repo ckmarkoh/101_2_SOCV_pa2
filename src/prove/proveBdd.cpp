@@ -237,7 +237,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 		cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
 
-		BddNodeV temp_state;
+//		BddNodeV temp_state;
 		BddNodeV prev_store;
 		BddNodeV checks;
 		unsigned z=0;
@@ -246,13 +246,13 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				checks=check;
 				prev_store=checks;
 			}
-			else{
+/*			else{
 				checks=temp_state;
-			}
+			}*/
 				//cout<<checks<<endl;
 			
 				
-				drawBddPng(name+"checks11_"+myInt2Str(z),checks);
+				drawBddPng(name+"checks_11_"+myInt2Str(z),checks);
 			
 		/*	BddNodeV get_input=checks;
 			for(unsigned j=0 ; j<dffbddsize;j++){
@@ -266,73 +266,55 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 			*/
 
 			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
-			BddNodeV checks12=checks;
 
 			for(unsigned j=1 ; j<=inbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
-				checks12=checks12.exist(j);
+				checks=checks.exist(j);
 			}
 
-			 drawBddPng(name+"checks12_"+myInt2Str(z),checks12);
+			 drawBddPng(name+"checks_12_"+myInt2Str(z),checks);
 
 
 			if(z>0){
-				checks12=checks12^(prev_store&checks12);
-				prev_store |= checks12;
+				checks=checks^(prev_store&checks);
+				prev_store |= checks;
 				 drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
 			}
 			
-			 drawBddPng(name+"checks13_"+myInt2Str(z),checks12);
+			 drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
 
-			if(checks12.getLevel()>0){
+			if(checks.getLevel()>0){
 				bool ismove;
-				checks12=checks12.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
+				checks=checks.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
 			}
 
 
-			 drawBddPng(name+"checks14_"+myInt2Str(z),checks12);
+			 drawBddPng(name+"checks_14_"+myInt2Str(z),checks);
 
 
-			BddNodeV checks2=_tri & checks12;
+			checks=_tri & checks;
 			
-				 drawBddPng(name+"checks21_"+myInt2Str(z),checks2);
+				 drawBddPng(name+"checks_21_"+myInt2Str(z),checks);
 			if(int(_reachStates.size())-1-int(z)<0){
 				break;
 			}
-			//checks2=checks2^checks;
-			checks2=checks2&_reachStates[_reachStates.size()-1-z];
+			//checks=checks^checks;
+			checks=checks&_reachStates[_reachStates.size()-1-z];
 
-			drawBddPng(name+"checks22_"+myInt2Str(z),checks2);
+			drawBddPng(name+"checks_22_"+myInt2Str(z),checks);
 			
 			for(unsigned j=0 ; j<dffbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
-				checks2=checks2.exist(totallevel-j);
+				checks=checks.exist(totallevel-j);
 			}
 
 
 			cerr<<"reachState size:"<<_reachStates.size()-1-z<<endl;
 
-				drawBddPng(name+"checks23_"+myInt2Str(z),checks2);
+				drawBddPng(name+"checks_23_"+myInt2Str(z),checks);
 
 
-		/*	get_input=checks2;
-
-
-			for(unsigned j=0 ; j<dffbddsize;j++){
-		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
-				get_input=get_input.exist(totallevel-dffbddsize-j);
-			}
-
-				drawBddPng(name+"get_input2_"+myInt2Str(z),get_input);*/
-		/*	cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
-			for(unsigned j=1 ; j<=inbddsize;j++){
-		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
-				checks2=checks2.exist(j);
-			}*/
-
-//				drawBddPng(name+"checks23_"+myInt2Str(z),checks2);
-
-			temp_state=checks2;
+//			temp_state=checks;
 
 			z++;
 		
