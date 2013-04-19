@@ -145,9 +145,9 @@ BddMgrV::buildPTransRelation()
         }
     //_tr=tri.exist(1)  
 
-		drawBddPng("tr_",_tr);
+		//drawBddPng("tr_",_tr);
 
-		drawBddPng("tri_",_tri);
+		//drawBddPng("tri_",_tri);
 }
 
 void
@@ -185,7 +185,7 @@ BddMgrV::buildPImage( int level )
 			temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
 		}
 //      cout<<"ismove "<<ismove<<endl;
-//      drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
+//      //drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
         if(temp_state==getPReachState()){
             Msg(MSG_IFO) << "Fixed point is reached  (time : " << _reachStates.size() << ")" << endl;
             _isFixed=true;
@@ -194,10 +194,10 @@ BddMgrV::buildPImage( int level )
             return;
         }
 
-		drawBddPng("img_temp_"+myInt2Str(int(_reachStates.size())),temp_state);
+		//drawBddPng("img_temp_"+myInt2Str(int(_reachStates.size())),temp_state);
         temp_state |= getPReachState();
  
-		drawBddPng("img_"+myInt2Str(int(_reachStates.size())),temp_state);
+		//drawBddPng("img_"+myInt2Str(int(_reachStates.size())),temp_state);
         _reachStates.push_back(temp_state); 
 
     }
@@ -238,6 +238,8 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 		cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
 
 //		BddNodeV temp_state;
+
+		BddNodeV temp_stat2;
 		BddNodeV prev_store;
 		BddNodeV checks;
 		unsigned z=0;
@@ -252,7 +254,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				//cout<<checks<<endl;
 			
 				
-				drawBddPng(name+"checks_11_"+myInt2Str(z),checks);
+				//drawBddPng(name+"checks_11_"+myInt2Str(z),checks);
 			
 		/*	BddNodeV get_input=checks;
 			for(unsigned j=0 ; j<dffbddsize;j++){
@@ -262,7 +264,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 
 			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
-				drawBddPng(name+"get_input1_"+myInt2Str(z),get_input);
+				//drawBddPng(name+"get_input1_"+myInt2Str(z),get_input);
 			*/
 
 			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
@@ -272,36 +274,53 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				checks=checks.exist(j);
 			}
 
-			 drawBddPng(name+"checks_12_"+myInt2Str(z),checks);
+			 //drawBddPng(name+"checks_12_"+myInt2Str(z),checks);
 
 
 			if(z>0){
 				checks=checks^(prev_store&checks);
 				prev_store |= checks;
-				 drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
-			}
+				 //drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
 			
-			 drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
+				/**************GET INPUT************************/	
+
+				BddNodeV get_input=( checks & temp_stat2) & _tri;
+				for(unsigned j=0 ; j<dffbddsize*2;j++){
+			//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+					get_input=get_input.exist(totallevel-j);
+				}
+					drawBddPng(name+"get_input_"+myInt2Str(z),get_input);
+				/**************GET INPUT************************/	
+			
+			}
+
+			 //drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
 
 			if(checks.getLevel()>0){
 				bool ismove;
 				checks=checks.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
 			}
+			
 
+			 //drawBddPng(name+"checks_14_"+myInt2Str(z),checks);
 
-			 drawBddPng(name+"checks_14_"+myInt2Str(z),checks);
-
+			temp_stat2=checks;
 
 			checks=_tri & checks;
-			
-				 drawBddPng(name+"checks_21_"+myInt2Str(z),checks);
+		
+
+
+
+
+
+				 //drawBddPng(name+"checks_21_"+myInt2Str(z),checks);
 			if(int(_reachStates.size())-1-int(z)<0){
 				break;
 			}
 			//checks=checks^checks;
 			checks=checks&_reachStates[_reachStates.size()-1-z];
 
-			drawBddPng(name+"checks_22_"+myInt2Str(z),checks);
+			//drawBddPng(name+"checks_22_"+myInt2Str(z),checks);
 			
 			for(unsigned j=0 ; j<dffbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
@@ -311,7 +330,7 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 			cerr<<"reachState size:"<<_reachStates.size()-1-z<<endl;
 
-				drawBddPng(name+"checks_23_"+myInt2Str(z),checks);
+				//drawBddPng(name+"checks_23_"+myInt2Str(z),checks);
 
 
 //			temp_state=checks;
