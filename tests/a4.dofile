@@ -6,5 +6,15 @@ pinit init
 ptrans ti t
 pimage img_0
 pcheckp -o 0
-pimage img_1
+pimage img_1 -n 2
 pcheckp -o 0
+pimage img_2 -n 4
+pcheckp -o 0
+pimage img_3 -n 8
+pcheckp -o 0
+pimage img_4 -n 16
+pcheckp -o 0
+pimage img_5 -n 32
+pcheckp -o 0
+q -f
+

@@ -8,8 +8,8 @@ reg [7:0]y;
 wire [7:0] sum;
 
 //assign z1 = (x == 8'd200);
-assign z1 = (x >= 8'd100);
-assign z2 = !(x <= 8'd200);
+assign z1 = (x > 8'd200);
+assign z2 = (x >= 8'd200);
 assign z3 = (x > 8'd200);
 assign z4 = (x == 8'd200) || (y == 8'd200);
 

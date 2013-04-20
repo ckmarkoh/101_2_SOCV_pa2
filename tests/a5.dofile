@@ -1,0 +1,10 @@
+read rtl tests/a5.v
+blast ntk
+bsetorder -file
+bconstruct -all
+pinit init
+ptrans ti t
+pimage img_0
+pcheckp -o 0
+pimage img_1
+pcheckp -o 0
