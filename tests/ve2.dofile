@@ -1,0 +1,18 @@
+read rtl tests/ve2.v
+blast ntk
+bsetorder -file
+bconstruct -all
+pinit init
+ptrans ti t
+pimage img_0
+pimage img_1 -n 10
+pcheckp -o 0
+pcheckp -o 1
+pimage img_2 -n 10
+pcheckp -o 0
+pcheckp -o 1
+pimage img_3 -n 5
+pcheckp -o 0
+pcheckp -o 1
+usage
+q -f
