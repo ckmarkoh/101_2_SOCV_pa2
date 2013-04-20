@@ -11,6 +11,7 @@
 #include <istream>
 #include <sstream>
 
+#include <math.h>
 #include "v3NtkUtil.h"
 #include "v3Msg.h"
 #include "bddMgrV.h"
@@ -26,6 +27,24 @@ inline string myInt2Str(const int num) {
    ss << num;
    return ss.str();
 }
+
+string decToBin(int a,size_t level)
+{
+    string binary = "";
+    unsigned mask = 1;
+    for(unsigned i = 0; i < level; i++)
+    {
+        if((mask&a) >= 1)
+            binary = "1"+binary;
+        else
+            binary = "0"+binary;
+        mask<<=1;
+    }
+    //cout<<binary<<endl;
+    return binary;
+}
+
+
 
 void drawBddPng(string fname,BddNodeV& b)
 {
@@ -232,13 +251,13 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 		Msg(MSG_IFO) << "Counter Example: " << endl;
 
 		addBddNodeV("monitor", monitor());
-   		drawBdd("monitor", "monitor.dot");
+   		//drawBdd("monitor", "monitor.dot");
 	
 
-		cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
+		//cout<<"inbdd:"<<inbddsize<<" dff:"<<dffbddsize<<" total:"<<totallevel<<endl;
 
 //		BddNodeV temp_state;
-
+		stack<string> counter_example;
 		BddNodeV temp_stat2;
 		BddNodeV prev_store;
 		BddNodeV checks;
@@ -267,7 +286,6 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				//drawBddPng(name+"get_input1_"+myInt2Str(z),get_input);
 			*/
 
-			cout<<"timeframe:"<<_reachStates.size()-z<<endl;	
 
 	/*		for(unsigned j=1 ; j<=inbddsize;j++){
 		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
@@ -275,40 +293,51 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 			}*/
 
 			 //drawBddPng(name+"checks_12_"+myInt2Str(z),checks);
-
+			BddNodeV get_input;
 
 			if(z>0){
 				checks=checks^(prev_store&checks);
 				prev_store |= checks;
 				 //drawBddPng(name+"checks_pre_"+myInt2Str(z),prev_store);
 				/**************GET INPUT************************/	
-				BddNodeV get_input=( checks & temp_stat2) & _tri;
-				for(unsigned j=0 ; j<dffbddsize*2;j++){
-			//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
-					get_input=get_input.exist(totallevel-j);
-				}
-					drawBddPng(name+"get_input_"+myInt2Str(z),get_input);
+				get_input=( checks & temp_stat2) & _tri;
 				/**************GET INPUT************************/	
 			}
+			else{
+				get_input= checks  & _tri;
+			}
 
-			 drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
+			for(unsigned j=0 ; j<dffbddsize*2;j++){
+		//      cout<<"get_input" <<totallevel-dffbddsize-j<<endl;
+				get_input=get_input.exist(totallevel-j);
+			}
+
+			
+			//cout<<_reachStates.size()-z<<":";	
+			for( int j=int( pow(float(2),float(inbddsize)) )-1 ; j >= 0;j-- ){
+				string bit_val=decToBin(j,inbddsize); 
+				if(evalCube(get_input,bit_val)==1){
+				//	cout<<evalCube(get_input,bit_val)<<endl;
+					counter_example.push(bit_val);
+				//	cout<<bit_val<<endl;;
+					break;
+				}
+				assert(j>0);
+			}
+
+
+			//drawBddPng(name+"get_input_"+myInt2Str(z),get_input);
+			
+			//drawBddPng(name+"checks_13_"+myInt2Str(z),checks);
 
 			if(checks.getLevel()>0){
 				bool ismove;
 				checks=checks.nodeMove(inbddsize+dffbddsize,totallevel,ismove);
 			}
 			
-
 			 //drawBddPng(name+"checks_14_"+myInt2Str(z),checks);
-
 			temp_stat2=checks;
-
 			checks=_tr & checks;
-		
-
-
-
-
 
 				 //drawBddPng(name+"checks_21_"+myInt2Str(z),checks);
 			if(int(_reachStates.size())-1-int(z)<0){
@@ -324,16 +353,16 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 				checks=checks.exist(totallevel-j);
 			}
 
-
-			cerr<<"reachState size:"<<_reachStates.size()-1-z<<endl;
-
+			//cerr<<"reachState size:"<<_reachStates.size()-1-z<<endl;
 				//drawBddPng(name+"checks_23_"+myInt2Str(z),checks);
-
-
 //			temp_state=checks;
 
 			z++;
-		
+		}
+		z=0;
+		while(counter_example.size()>0){
+			cout<<z++<<": "<<counter_example.top()<<endl;
+			counter_example.pop();
 		}
 	}
 
