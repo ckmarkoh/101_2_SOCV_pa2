@@ -203,10 +203,11 @@ BddMgrV::buildPImage( int level )
 		if(temp_state.getLevel()>0){
 			temp_state=temp_state.nodeMove(inbddsize+dffbddsize+1,inbddsize+1,ismove);
 		}
+		cout<<"Computing reachable state (time :"<<_reachStates.size()<<" )"<<endl;
 //      cout<<"ismove "<<ismove<<endl;
 //      //drawBddPng("temp_State_move"+myInt2Str(i),temp_state);
         if(temp_state==getPReachState()){
-            Msg(MSG_IFO) << "Fixed point is reached  (time : " << _reachStates.size() << ")" << endl;
+            Msg(MSG_IFO) << "Fixed point is reached (time : " << _reachStates.size() << ")" << endl;
             _isFixed=true;
 
     //  cout<<"Fixed point is reached (time : " <<_reachStates.size()<<")" <<endl;
@@ -241,13 +242,13 @@ BddMgrV::runPCheckProperty( const string &name, BddNodeV monitor )
 
 		
     if(check==BddNodeV::_zero){
-        Msg(MSG_IFO) << "Property \"" << name << "\" is safe";
+        Msg(MSG_IFO) << "Monitor \"" << name << "\" is safe";
        if(!_isFixed) Msg(MSG_IFO) << " up to time " << _reachStates.size();
         Msg(MSG_IFO) << "." << endl;
 
     }
     else{
-        Msg(MSG_IFO) << "Property \"" << name << "\" is violated." << endl;
+        Msg(MSG_IFO) << "Monitor \"" << name << "\" is violated." << endl;
 		Msg(MSG_IFO) << "Counter Example: " << endl;
 
 		addBddNodeV("monitor", monitor());
